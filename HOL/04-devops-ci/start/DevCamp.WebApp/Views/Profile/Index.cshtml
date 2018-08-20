@@ -1,0 +1,66 @@
+﻿@model DevCamp.WebApp.ViewModels.UserProfileViewModel
+
+@{
+    ViewBag.Title = "Profile";
+}
+
+
+<!-- Body -->
+<div class="container">
+
+    <h1>User Profile</h1>
+
+    <table class="table table-striped table-bordered">
+        <tbody>
+            <tr>
+                <th>Profile</th>
+                <td>https://graph.microsoft.com/v1.0/$metadata#users/$entity</td>
+            </tr>
+            <tr>
+                <th>id</th>
+                <td>@Html.DisplayFor(model => model.Id)</td>
+            </tr>
+            <tr>
+                <th>businessPhones</th>
+                @*<td>@Html.DisplayFor(model => model.BusinessPhones)</td>*@
+            </tr>
+            <tr>
+                <th>displayName</th>
+                <td>@Html.DisplayFor(model => model.DisplayName)</td>
+            </tr>
+            <tr>
+                <th>givenName</th>
+                <td>@Html.DisplayFor(model => model.GivenName)</td>
+            </tr>
+            <tr>
+                <th>jobTitle</th>
+                <td>@Html.DisplayFor(model => model.JobTitle)</td>
+            </tr>
+            <tr>
+                <th>mail</th>
+                <td>@Html.DisplayFor(model => model.Mail)</td>
+            </tr>
+            <tr>
+                <th>mobilePhone</th>
+                <td>@Html.DisplayFor(model => model.MobilePhone)</td>
+            </tr>
+            <tr>
+                <th>officeLocation</th>
+                <td>@Html.DisplayFor(model => model.OfficeLocation)</td>
+            </tr>
+            <tr>
+                <th>preferredLanguage</th>
+                <td>@Html.DisplayFor(model => model.PreferredLanguage)</td>
+            </tr>
+            <tr>
+                <th>surname</th>
+                <td>@Html.DisplayFor(model => model.Surname)</td>
+            </tr>
+            <tr>
+                <th>userPrincipalName</th>
+                <td>@Html.DisplayFor(model => model.UserPrincipalName)</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>

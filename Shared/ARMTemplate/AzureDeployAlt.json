@@ -1,0 +1,613 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {
+        "apiAppName": "[concat('incidentapi', uniqueString(resourceGroup().id))]",
+        "dotnetAppName": "[concat('dotnetapp', uniqueString(resourceGroup().id))]",
+        "nodejsAppName": "[concat('nodejsapp', uniqueString(resourceGroup().id))]",
+        "javaAppName": "[concat('javaapp', uniqueString(resourceGroup().id))]",
+        "hostingPlanName": "[concat('incidentappplan', uniqueString(resourceGroup().id))]",
+        "skuCapacity": "1",
+        "skuName": "B1",
+        "repoURL": "https://github.com/AzureCAT-GSI/DevCamp.git",
+        "repoBranch": "master",
+        "storageName": "[substring(toLower(concat('incidentblobstg', uniqueString(resourceGroup().id))), 0, 24)]",
+        "diagStorageName": "[substring(toLower(concat('incidentdiagstg', uniqueString(resourceGroup().id))), 0, 24)]",
+        "storageType": "Standard_LRS",
+        "queueName": "thumbnails",
+        "imgContainerName": "images",
+        "docDBName": "[concat('incidentdb', uniqueString(resourceGroup().id))]",
+        "docDBCollectionId": "incidents",
+        "redisCacheName": "[concat('incidentcache', uniqueString(resourceGroup().id))]",
+        "redisCacheSKUName": "Standard",
+        "redisCacheSKUFamily": "C",
+        "redisCacheSKUCapacity": "1",
+        "redisCacheRedisVersion": "3.0",
+        "enableNonSslPort": "false",
+        "dtlName": "DevCamp",
+        "dtlId": "[resourceId('Microsoft.DevTestLab/labs', variables('dtlName'))]",
+        "dtlVnetName": "DevCampVnet",
+        "dtlVnetId": "[resourceId('Microsoft.DevTestLab/labs/virtualNetworks', variables('dtlName'), variables('dtlVnetName'))]",
+        "dtlVmName": "[concat('Dev', '-', take(uniqueString(resourceGroup().id), 4))]",
+        "dtlVmSizes": "\"Standard_DS1_v2\", \"Standard_DS2_v2\", \"Standard_DS11_v2\"",
+        "dtlVmSize": "Standard_DS2_v2",
+        "dtlVmStorage": "Premium",
+        "dtlShutdownTime": "21:00",
+        "dtlTimeZoneId": "UTC",
+        "dtlVmUsername": "l-admin",
+        "dtlVmPassword": "Devc@mp2016!",
+        "chocoPackages": "Git-Credential-Manager-for-Windows,github,azure-cli,microsoftazurestorageexplorer,webpicmd,eclipse,jre8,javaruntime"
+    },
+    "resources": [
+        {
+            "name": "[variables('storageName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "Storage"
+            },
+            "properties": {
+                "accountType": "[variables('storageType')]"
+            }
+        },
+        {
+            "name": "[variables('diagStorageName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "DiagnosticStorage"
+            },
+            "properties": {
+                "accountType": "[variables('storageType')]"
+            }
+        },
+        {
+            "name": "[variables('redisCacheName')]",
+            "type": "Microsoft.Cache/Redis",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2014-04-01-preview",
+            "tags": {
+                "displayName": "RedisCache"
+            },
+            "properties": {
+                "enableNonSslPort": "[variables('enableNonSslPort')]",
+                "sku": {
+                    "name": "[variables('redisCacheSKUName')]",
+                    "family": "[variables('redisCacheSKUFamily')]",
+                    "capacity": "[variables('redisCacheSKUCapacity')]"
+                },
+                "redisVersion": "[variables('redisCacheRedisVersion')]"
+            }
+        },
+        {
+            "apiVersion": "2015-04-08",
+            "kind": "GlobalDocumentDB",
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "name": "[variables('docDBName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "name": "[variables('docDBName')]",
+                "databaseAccountOfferType": "Standard",
+                "consistencyPolicy": {
+                    "defaultConsistencyLevel": "Session",
+                    "maxIntervalInSeconds": 5,
+                    "maxStalenessPrefix": 100
+                }
+            },
+            "tags": {
+                "displayName": "CosmosDB",
+                "defaultExperience": "DocumentDB"
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "name": "[variables('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "HostingPlan"
+            },
+            "sku": {
+                "name": "[variables('skuName')]",
+                "capacity": "[variables('skuCapacity')]"
+            },
+            "properties": {
+                "name": "[variables('hostingPlanName')]"
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "name": "[variables('apiAppName')]",
+            "kind": "api",
+            "type": "Microsoft.Web/sites",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
+                "displayName": "ApiApp"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            ],
+            "properties": {
+                "name": "[variables('apiAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+            },
+            "resources": [
+                {
+                    "name": "appsettings",
+                    "type": "config",
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/sites/', variables('apiAppName'))]",
+                        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
+                        "[concat('Microsoft.DocumentDB/databaseAccounts/', variables('docDBName'))]",
+                        "[concat('Microsoft.Cache/Redis/', variables('redisCacheName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "AppSettings"
+                    },
+                    "properties": {
+                        "AZURE_STORAGE_ACCOUNT": "[variables('storageName')]",
+                        "AZURE_STORAGE_ACCESS_KEY": "[listKeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2016-01-01').keys[0].value]",
+                        "AZURE_STORAGE_BLOB_CONTAINER": "[variables('imgContainerName')]",
+                        "AZURE_STORAGE_QUEUE": "[variables('queueName')]",
+                        "DOCUMENTDB_ENDPOINT": "[reference(concat('Microsoft.DocumentDb/databaseAccounts/', variables('docDBName'))).documentEndpoint]",
+                        "DOCUMENTDB_COLLECTIONID": "[variables('docDBCollectionId')]",
+                        "DOCUMENTDB_DATABASEID": "[variables('docDBName')]",
+                        "DOCUMENTDB_PRIMARY_KEY": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', variables('docDBName')), '2015-04-08').primaryMasterKey]",
+                        "REDISCACHE_HOSTNAME": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').hostName]",
+                        "REDISCACHE_PORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').port]",
+                        "REDISCACHE_SSLPORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').sslPort]",
+                        "REDISCACHE_PRIMARY_KEY": "[listKeys(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').primaryKey]",
+                        "PROJECT": "Shared/API/DevCamp.API/DevCamp.API.csproj"
+                    }
+                },
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/Sites/', variables('apiAppName'))]",
+                        "[concat('Microsoft.Web/Sites/', variables('apiAppName'), '/config/appsettings')]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "[variables('repoURL')]",
+                        "branch": "[variables('repoBranch')]",
+                        "IsManualIntegration": true
+                    },
+                    "tags": {
+                        "displayName": "Deployment"
+                    }
+                },
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "logs",
+                    "type": "config",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', variables('apiAppName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "Logs"
+                    },
+                    "properties": {
+                        "applicationLogs": {
+                            "fileSystem": {
+                                "level": "Verbose"
+                            }
+                        },
+                        "httpLogs": {
+                            "fileSystem": {
+                                "retentionInMb": 40,
+                                "enabled": true
+                            }
+                        },
+                        "failedRequestsTracing": {
+                            "enabled": true
+                        },
+                        "detailedErrorMessages": {
+                            "enabled": true
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[variables('dotnetAppName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-08-01",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            ],
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
+                "displayName": "DotnetApp"
+            },
+            "properties": {
+                "name": "[variables('dotnetAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            },
+            "resources": [
+                {
+                    "name": "appsettings",
+                    "type": "config",
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/sites/', variables('dotnetAppName'))]",
+                        "[concat('Microsoft.Web/sites/', variables('apiAppName'))]",
+                        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
+                        "[concat('Microsoft.Cache/Redis/', variables('redisCacheName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "AppSettings"
+                    },
+                    "properties": {
+                        "AZURE_STORAGE_ACCOUNT": "[variables('storageName')]",
+                        "AZURE_STORAGE_ACCESS_KEY": "[listKeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2016-01-01').keys[0].value]",
+                        "AZURE_STORAGE_BLOB_CONTAINER": "[variables('imgContainerName')]",
+                        "AZURE_STORAGE_QUEUE": "[variables('queueName')]",
+                        "INCIDENT_API_URL": "[concat('https://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName')),'2015-08-01').defaultHostName)]",
+                        "REDISCACHE_HOSTNAME": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').hostName]",
+                        "REDISCACHE_PORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').port]",
+                        "REDISCACHE_SSLPORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').sslPort]",
+                        "REDISCACHE_PRIMARY_KEY": "[listKeys(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').primaryKey]"
+                    }
+                },
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "logs",
+                    "type": "config",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', variables('dotnetAppName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "Logs"
+                    },
+                    "properties": {
+                        "applicationLogs": {
+                            "fileSystem": {
+                                "level": "Verbose"
+                            }
+                        },
+                        "httpLogs": {
+                            "fileSystem": {
+                                "retentionInMb": 40,
+                                "enabled": true
+                            }
+                        },
+                        "failedRequestsTracing": {
+                            "enabled": true
+                        },
+                        "detailedErrorMessages": {
+                            "enabled": true
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[variables('nodejsAppName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-08-01",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            ],
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
+                "displayName": "NodejsApp"
+            },
+            "properties": {
+                "name": "[variables('nodejsAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            },
+            "resources": [
+                {
+                    "name": "appsettings",
+                    "type": "config",
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/sites/', variables('nodejsAppName'))]",
+                        "[concat('Microsoft.Web/sites/', variables('apiAppName'))]",
+                        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
+                        "[concat('Microsoft.Cache/Redis/', variables('redisCacheName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "AppSettings"
+                    },
+                    "properties": {
+                        "WEBSITE_NODE_DEFAULT_VERSION": "6.7.0",
+                        "AZURE_STORAGE_ACCOUNT": "[variables('storageName')]",
+                        "AZURE_STORAGE_ACCESS_KEY": "[listKeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2016-01-01').keys[0].value]",
+                        "AZURE_STORAGE_BLOB_CONTAINER": "[variables('imgContainerName')]",
+                        "AZURE_STORAGE_QUEUE": "[variables('queueName')]",
+                        "INCIDENT_API_URL": "[concat('https://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName')),'2015-08-01').defaultHostName)]",
+                        "REDISCACHE_HOSTNAME": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').hostName]",
+                        "REDISCACHE_PORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').port]",
+                        "REDISCACHE_SSLPORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').sslPort]",
+                        "REDISCACHE_PRIMARY_KEY": "[listKeys(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').primaryKey]"
+                    }
+                },
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "logs",
+                    "type": "config",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', variables('nodejsAppName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "Logs"
+                    },
+                    "properties": {
+                        "applicationLogs": {
+                            "fileSystem": {
+                                "level": "Verbose"
+                            }
+                        },
+                        "httpLogs": {
+                            "fileSystem": {
+                                "retentionInMb": 40,
+                                "enabled": true
+                            }
+                        },
+                        "failedRequestsTracing": {
+                            "enabled": true
+                        },
+                        "detailedErrorMessages": {
+                            "enabled": true
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[variables('javaAppName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-08-01",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            ],
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "Resource",
+                "displayName": "JavaApp"
+            },
+            "properties": {
+                "name": "[variables('javaAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "web",
+                    "type": "config",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/sites/', variables('javaAppName'))]"
+                    ],
+                    "properties": {
+                        "javaVersion": "1.8",
+                        "javaContainer": "TOMCAT",
+                        "javaContainerVersion": "8.0"
+                    }
+                },
+                {
+                    "name": "appsettings",
+                    "type": "config",
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/sites/', variables('javaAppName'))]",
+                        "[concat('Microsoft.Web/sites/', variables('apiAppName'))]",
+                        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
+                        "[concat('Microsoft.Cache/Redis/', variables('redisCacheName'))]"
+                    ],
+                    "properties": {
+                        "AZURE_STORAGE_ACCOUNT": "[variables('storageName')]",
+                        "AZURE_STORAGE_ACCESS_KEY": "[listKeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2016-01-01').keys[0].value]",
+                        "AZURE_STORAGE_BLOB_CONTAINER": "[variables('imgContainerName')]",
+                        "AZURE_STORAGE_QUEUE": "[variables('queueName')]",
+                        "INCIDENT_API_URL": "[concat('https://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName')),'2015-08-01').defaultHostName)]",
+                        "REDISCACHE_HOSTNAME": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').hostName]",
+                        "REDISCACHE_PORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').port]",
+                        "REDISCACHE_SSLPORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').sslPort]",
+                        "REDISCACHE_PRIMARY_KEY": "[listKeys(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').primaryKey]"
+                    },
+                    "tags": {
+                        "displayName": "AppSettings"
+                    }
+                },
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "logs",
+                    "type": "config",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', variables('javaAppName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "Logs"
+                    },
+                    "properties": {
+                        "applicationLogs": {
+                            "fileSystem": {
+                                "level": "Verbose"
+                            }
+                        },
+                        "httpLogs": {
+                            "fileSystem": {
+                                "retentionInMb": 40,
+                                "enabled": true
+                            }
+                        },
+                        "failedRequestsTracing": {
+                            "enabled": true
+                        },
+                        "detailedErrorMessages": {
+                            "enabled": true
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2016-05-15",
+            "type": "Microsoft.DevTestLab/labs",
+            "name": "[variables('dtlName')]",
+            "location": "[resourceGroup().location]",
+            "resources": [
+                {
+                    "apiVersion": "2016-05-15",
+                    "name": "[variables('dtlVnetName')]",
+                    "type": "virtualnetworks",
+                    "dependsOn": [
+                        "[variables('dtlId')]"
+                    ]
+                },
+                {
+                    "apiVersion": "2016-05-15",
+                    "name": "LabVmsShutdown",
+                    "type": "schedules",
+                    "dependsOn": [
+                        "[variables('dtlId')]"
+                    ],
+                    "properties": {
+                        "status": "Enabled",
+                        "timeZoneId": "[variables('dtlTimeZoneId')]",
+                        "taskType": "LabVmsShutdownTask",
+                        "dailyRecurrence": {
+                            "time": "[replace(variables('dtlShutdownTime'), ':', '')]"
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2016-05-15",
+                    "name": "default/MaxVmsAllowedPerUser",
+                    "type": "policysets/policies",
+                    "dependsOn": [
+                        "[variables('dtlId')]"
+                    ],
+                    "properties": {
+                        "description": "",
+                        "factName": "UserOwnedLabVmCount",
+                        "threshold": 5,
+                        "evaluatorType": "MaxValuePolicy",
+                        "status": "enabled"
+                    }
+                },
+                {
+                    "apiVersion": "2016-05-15",
+                    "name": "default/MaxVmsAllowedPerLab",
+                    "type": "policysets/policies",
+                    "dependsOn": [
+                        "[variables('dtlId')]"
+                    ],
+                    "properties": {
+                        "description": "",
+                        "factName": "LabVmCount",
+                        "threshold": 25,
+                        "evaluatorType": "MaxValuePolicy",
+                        "status": "enabled"
+                    }
+                },
+                {
+                    "apiVersion": "2016-05-15",
+                    "name": "default/AllowedVmSizesInLab",
+                    "type": "policysets/policies",
+                    "dependsOn": [
+                        "[variables('dtlId')]"
+                    ],
+                    "properties": {
+                        "description": "VM sizes allowed for creation in lab",
+                        "factName": "LabVmSize",
+                        "threshold": "[concat('[', trim(variables('dtlVmSizes')), ']')]",
+                        "evaluatorType": "AllowedValuesPolicy",
+                        "status": "enabled"
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2016-05-15",
+            "type": "Microsoft.DevTestLab/labs/virtualmachines",
+            "name": "[concat(variables('dtlName'), '/', 'Win', variables('dtlVmName'))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('dtlVnetId')]"
+            ],
+            "properties": {
+                "labVirtualNetworkId": "[variables('dtlVnetId')]",
+                "labSubnetName": "[concat(variables('dtlVnetName'), 'Subnet')]",
+                "notes": "WinServer 2012R2 DC + VS2015",
+                "galleryImageReference": {
+                    "offer": "VisualStudio",
+                    "publisher": "MicrosoftVisualStudio",
+                    "sku": "VS-2015-Comm-VSU3-AzureSDK-29-WS2012R2",
+                    "osType": "Windows",
+                    "version": "latest"
+                },
+                "size": "[variables('dtlVmSize')]",
+                "storageType": "[variables('dtlVmStorage')]",
+                "userName": "[variables('dtlVmUsername')]",
+                "password": "[variables('dtlVmPassword')]",
+                "isAuthenticationWithSshKey": false,
+                "disallowPublicIpAddress": false,
+                "allowClaim": false
+            }
+        }
+    ],
+    "outputs": {
+        "AZURE_STORAGE_ACCOUNT": {
+            "type": "string",
+            "value": "[variables('storageName')]"
+        },
+        "AZURE_STORAGE_ACCESS_KEY": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2016-01-01').keys[0].value]"
+        },
+        "AZURE_STORAGE_BLOB_CONTAINER": {
+            "type": "string",
+            "value": "[variables('imgContainerName')]"
+        },
+        "AZURE_STORAGE_QUEUE": {
+            "type": "string",
+            "value": "[variables('queueName')]"
+        },
+        "INCIDENT_API_URL": {
+            "type": "string",
+            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName')),'2015-08-01').defaultHostName)]"
+        },
+        "REDISCACHE_HOSTNAME": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').hostName]"
+        },
+        "REDISCACHE_PORT": {
+            "type": "int",
+            "value": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').port]"
+        },
+        "REDISCACHE_SSLPORT": {
+            "type": "int",
+            "value": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').sslPort]"
+        },
+        "REDISCACHE_PRIMARY_KEY": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').primaryKey]"
+        },
+        "env": {
+            "type": "object",
+            "value": {
+                "AZURE_STORAGE_ACCOUNT": "[variables('storageName')]",
+                "AZURE_STORAGE_ACCESS_KEY": "[listKeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2016-01-01').keys[0].value]",
+                "AZURE_STORAGE_BLOB_CONTAINER": "[variables('imgContainerName')]",
+                "AZURE_STORAGE_QUEUE": "[variables('queueName')]",
+                "INCIDENT_API_URL": "[concat('https://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName')),'2015-08-01').defaultHostName)]",
+                "REDISCACHE_HOSTNAME": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').hostName]",
+                "REDISCACHE_PORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').port]",
+                "REDISCACHE_SSLPORT": "[reference(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').sslPort]",
+                "REDISCACHE_PRIMARY_KEY": "[listKeys(resourceId('Microsoft.Cache/Redis', variables('redisCacheName')), '2014-04-01').primaryKey]"
+            }
+        }
+    }
+}

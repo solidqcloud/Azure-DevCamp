@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>City Power & Light</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/css/bootstrap.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootswatch/3.3.7/flatly/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/main.css">
+
+</head>
+
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="../index.html">Outages</a>
+            </div>
+
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="../dashboard/dashboard.html">Dashboard</a></li>
+                    <li class="active"><a href="../new/new.html">Report Outage</a></li>
+                </ul>
+
+                <!-- Top Navigation Right -->
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Hi, Garth Ford <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">Profile</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <!-- Body -->
+    <div class="container">
+
+        <h1>Report an Outage</h1>
+
+        <p>Welcome to the CP&amp;L outage reporting tool. From here you can view all reported outages via the dashboard screen, or report a new outage. Our technicians will address outages as soon as possible.</p>
+
+        <div class="row">
+
+            <form>
+
+                <!-- Left Column -->
+                <div class="col-sm-6">
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" rows="3" id="description"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="addressStreet">Street</label>
+                        <input type="text" class="form-control" id="addressStreet" placeholder="255 W. Elm Street">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="addressCity">City</label>
+                        <input type="text" class="form-control" id="addressCity" placeholder="Springfield">
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label for="addressState">State</label>
+                                <input type="text" class="form-control" id="addressState" placeholder="TX">
+                            </div>
+                        </div>
+
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label for="addressZip">Zip</label>
+                                <input type="number" class="form-control" id="addressZip" placeholder="90210">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" class="form-control" id="firstName" placeholder="Jane">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" placeholder="Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="+1 (417) 444-4444">
+                    </div>
+
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox"> Emergency
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" class="btn btn-danger">Cancel</button>
+
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-sm-6">
+
+                    <div class="form-group well well-lg">
+                        <label for="image">Image of the Outage</label>
+                        <input type="file" class="form-control" id="image">
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-2.2.4.js"></script>
+    <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/bootstrap.js"></script>
+
+</body>
+
+</html>

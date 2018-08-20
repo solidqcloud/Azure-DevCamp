@@ -1,0 +1,25 @@
+﻿@if (Request.IsAuthenticated)
+{
+    <text>
+        <li class="dropdown">
+            @*The 'preferred_username' claim can be used for showing the user's primary way of identifying themselves.*@
+
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                Hi, @(System.Security.Claims.ClaimsPrincipal.Current.FindFirst("name").Value)!<span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+                <li>@Html.ActionLink("Profile", "Index", "Profile")</li>
+                <li role="separator" class="divider"></li>
+                <li>
+                    @Html.ActionLink("Sign out", "SignOut", "Profile")
+                </li>
+            </ul>
+        </li>
+    </text>
+}
+else
+{
+    <ul class="nav navbar-nav navbar-right">
+        <li>@Html.ActionLink("Sign in", "SignIn", "Profile", routeValues: null, htmlAttributes: new { id = "loginLink" })</li>
+    </ul>
+}
