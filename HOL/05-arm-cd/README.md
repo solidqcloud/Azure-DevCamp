@@ -205,7 +205,7 @@ With the updated Release Definition, we can now execute a release.
 
     ![image](./media/2017-06-23_10_43_00.png)
 
-1. On the top toolbar, select `Logs` to monitor the release process. When the release for the dev environment finishes, you will be prompted to approve the release to the test environment. Click `Approve` to continue the release.
+1. When the release for the dev environment finishes, you will be prompted to approve the release to the test environment. Click `Approve` to continue the release.
 
     ![image](./media/2017-06-23_10_45_00.png)
 
