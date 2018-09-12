@@ -160,15 +160,15 @@ The resource group is now holding our "Test" environment web app and has been ad
 ---
 ## Exercise 3: Integrate new Web App into VSTS<a name="ex3"></a>
 
-1. In [VSTS](https://www.visualstudio.com/), open the **Release Definition** that we started in a previous lab. You should be be able to find this by navigating to `Releases` in the `Build & Release` menu on the top navigation. We need to create a second environment to serve as our test web app.
+1. In [VSTS](https://www.visualstudio.com/), open the **Release Definition** that we started in a previous lab. You should be be able to find this by navigating to `Releases` in the `Pipelines` menu. We need to create a second environment to serve as our test web app.
 
     ![image](./media/2017-06-23_10_07_00.png)
 
-1. Click the drop-down arrow next to the existing Release Definition, and select `Edit`:
+1. Click the existing Release Definition, and select `Edit Pipeline`:
 
     ![image](./media/2017-06-23_10_09_00.png)
 
-1. In the Release Definition, first select `Environment 1`, then select `Add` and select `Clone environment`. We will use our existing Dev web app configuration as the template for the new test web app configuration.
+1. In the Release Definition, first select `Environment 1`, then select `Clone`. We will use our existing Dev web app configuration as the template for the new test web app configuration.
 
     ![image](./media/2017-06-23_10_11_00.png)
 
