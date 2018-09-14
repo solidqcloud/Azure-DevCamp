@@ -187,6 +187,7 @@ This hands-on-lab has the following exercises:
     // Example
     <add key="INCIDENT_API_URL" value="http://incidentapi32csxy6h3s7bku.azurewebsites.net" />
     ```
+IMPORTANT! Not URL value with https
 
     > The URL should not have a `/` on the end!
 
