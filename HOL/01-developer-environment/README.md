@@ -177,9 +177,9 @@ You have now activated a Visual Studio Team Services Trial Subscription, which w
 
 1. We have created an Azure Resource Group template that will configure the resources you need in Azure for the DevCamp. To deploy these resources in your Azure subscription, `control + click` on the blue ***Deploy to Azure*** button below (on a MAC, use `Apple Key + click`):
 
-    **Full deployment:** :point_right:    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/solidqcloud/Azure-DevCamp/dev-holmod1/Shared/ARMTemplate/AzureDeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>    :point_left:
+    **Full deployment:** :point_right:    <a href="https://azuredeploy.net/?repository=https://raw.githubusercontent.com/solidqcloud/Azure-DevCamp/dev-holmod1/Shared/ARMTemplate/AzureDeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>    :point_left:
 
-    **Alternative without artifacts:** :point_right:    <a href="https://raw.githubusercontent.com/solidqcloud/Azure-DevCamp/master/Shared/ARMTemplate/AzureDeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>    :point_left:
+    **Alternative without artifacts:** :point_right:    <a href="https://azuredeploy.net/?repository=https://raw.githubusercontent.com/solidqcloud/Azure-DevCamp/dev-holmod1/Shared/ARMTemplate/AzureDeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>    :point_left:
     > If you are using the alternative deployment you have to manually install:
     > [Chrome](https://www.google.com/chrome/),
     > [git](https://git-scm.com/download/win),
