@@ -73,7 +73,7 @@ AzureAD can handle authentication for web applications. First we will create a n
 
     ![image](./media/2017-21-06_07_57_00.png)
 
-1. Navigate in a browser to [https://apps.dev.microsoft.com](https://apps.dev.microsoft.com), login with your Azure credentials (Work or school Account), and click the button to `Add an app`.
+1. Navigate in a browser to [https://apps.dev.microsoft.com](https://apps.dev.microsoft.com), login with your Azure credentials (Work or school Account), and click the button to `Add an app`. Please do not use Live accounts since they use API version 1.0.
 
     ![image](./media/2017-21-06_08_00_00.png)
 
